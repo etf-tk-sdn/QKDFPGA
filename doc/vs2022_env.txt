@@ -1,7 +1,7 @@
 INCLUDE=
 C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\include;
 C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\ATLMFC\include;
-C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6\include\um;
+C:\Program Files (x86)\Windows Kits\NETFXSDK\4.8\include\um;
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\ucrt;
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\shared;
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um;
@@ -11,7 +11,7 @@ C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\cppwinrt
 LIB=
 C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\ATLMFC\lib\x64;
 C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\lib\x64;
-C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6\lib\um\x64;
+C:\Program Files (x86)\Windows Kits\NETFXSDK\4.8\lib\um\x64;
 C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\ucrt\x64;
 C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64
 
@@ -23,4 +23,4 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd6
 C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\bin\Roslyn;
 C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64;
 C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\ucrt;
-C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64
+C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64

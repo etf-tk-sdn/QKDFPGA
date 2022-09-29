@@ -1,1 +1,11 @@
 QKDFPGA
+
+git clone https://etf-tk-sdn-admin@bitbucket.org/etf-tk-sdn/qkdfpga.git
+cd qkdfpga
+git submodule init
+git submodule update
+cd CppServer
+gil update  %Run as administrator
+cd build
+vs
+
