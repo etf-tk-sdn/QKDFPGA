@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>C:\Users\DE10\QKDFPGA\sw\QKDServer\x64\Debug\QKDServer.exe</FullPath>
+      <FullPath>D:\qkdfpga\sw\QKDServer\x64\Debug\QKDServer.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

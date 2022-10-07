@@ -1,0 +1,78 @@
+openapi: 3.0.0
+
+info:
+  version: "1.0"
+  title: ETSI GS QKD 014 API
+  description: ETSI GS QKD 014 API
+  
+servers:
+- url: /api/v1/keys
+  description: ETSI GS QKD 014
+
+tags:
+- name: Status
+  description: Status methods
+- name: Key
+  description: Key methods
+
+paths:
+  /{SAEId}/status:
+    get:
+      tags:
+      - Status
+      summary: Get the status object
+      operationId: GetStatusObject
+      parameters:
+      - name: SAEId
+        in: path
+        description: SAE ID
+        required: true
+        schema:
+          type: string
+          example: 'JJJJKKKKLLLL'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+            text/plain:
+              schema:
+                type: string
+        404:
+          description: Status key not found
+          content: {}
+        500:
+          description: Internal server error
+          content: {}      
+  /{SAEId}/key:
+    get:
+      tags:
+      - Key
+      summary: Get the key container object
+      operationId: GetKeyContainerObject
+      parameters:
+      - name: SAEId
+        in: path
+        description: SAE ID
+        required: true
+        schema:
+          type: string
+          example: 'JJJJKKKKLLLL'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+            text/plain:
+              schema:
+                type: string
+        404:
+          description: Key container key not found
+          content: {}
+        500:
+          description: Internal server error
+          content: {}
