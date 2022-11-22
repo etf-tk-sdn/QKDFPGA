@@ -46,7 +46,7 @@ paths:
         500:
           description: Internal server error
           content: {}      
-  /{SAEId}/key:
+  /{SAEId}/enc_keys:
     get:
       tags:
       - Key
@@ -60,6 +60,20 @@ paths:
         schema:
           type: string
           example: 'JJJJKKKKLLLL'
+      - name: number
+        in: query
+        description: number
+        required: false
+        schema:
+          type: integer
+          example: 1
+      - name: size
+        in: query
+        description: size
+        required: false
+        schema:
+          type: integer
+          example: 1024
       responses:
         200:
           description: Success
@@ -72,6 +86,49 @@ paths:
                 type: string
         404:
           description: Key container key not found
+          content: {}
+        500:
+          description: Internal server error
+          content: {}
+    post:
+      tags:
+      - Key
+      summary: Create the key container object
+      operationId: CreateKeyContainerObject
+      parameters:
+      - name: SAEId
+        in: path
+        description: SAE ID
+        required: true
+        schema:
+          type: string
+          example: 'JJJJKKKKLLLL'
+      requestBody:
+        description: additional_slave_SAE_IDs
+        required: false
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties:
+               number:
+                type: integer
+               size:
+                type: integer
+               additional_slave_SAE_IDs:
+                type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+            text/plain:
+              schema:
+                type: string
+        404:
+          description: Not found
           content: {}
         500:
           description: Internal server error
