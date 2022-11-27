@@ -63,15 +63,58 @@ namespace qkdtypes
             this->min_key_size = min_key_size;
             this->max_SAE_ID_count = max_SAE_ID_count;
         }
+        std::string& getSource_KME_ID()
+        {
+            return source_KME_ID;
+        }
+        std::string& getTarget_KME_ID()
+        {
+            return target_KME_ID;
+        }
+        std::string& getMaster_SAE_ID()
+        {
+            return master_SAE_ID;
+        }
+        std::string& getSlave_SAE_ID()
+        {
+            return slave_SAE_ID;
+        }
+        int& getKey_Size()
+        {
+            return key_size;
+        }
+        int& getStored_Key_Count()
+        {
+            return stored_key_count;
+        }
+        int& getMax_Key_Count()
+        {
+            return max_key_count;
+        }
+        int& getMax_Key_Per_Request()
+        {
+            return max_key_per_request;
+        }
+        int& getMax_Key_Size()
+        {
+            return max_key_size;
+        }
+        int& getMin_Key_Size()
+        {
+            return min_key_size;
+        }
+        int& getMax_SAE_ID_Count()
+        {
+            return max_SAE_ID_count;
+        }
         AS_JSON(Status, source_KME_ID, target_KME_ID, master_SAE_ID, slave_SAE_ID, key_size, stored_key_count, max_key_count, max_key_per_request, max_key_size, min_key_size, max_SAE_ID_count)
     };
 
     class Key {
     private:
         std::string key_ID;
-     //   std::string key;
-    public:
         std::string key;
+    public:
         Key()
         {
 
@@ -81,7 +124,34 @@ namespace qkdtypes
             this->key_ID = key_ID;
             this->key = key;
         }
+        std::string& getKey()
+        {
+            return key;
+        }
+        std::string& getKey_ID()
+        {
+            return key_ID;
+        }
         AS_JSON(Key, key_ID, key)
+    };
+
+    class Key_ID {
+    private:
+        std::string key_ID;
+    public:
+        Key_ID()
+        {
+
+        }
+        Key_ID(std::string key_ID)
+        {
+            this->key_ID = key_ID;
+        }
+        std::string& getKey_ID()
+        {
+            return key_ID;
+        }
+        AS_JSON(Key_ID, key_ID)
     };
 
     class KeyContainer 
@@ -134,7 +204,6 @@ namespace qkdtypes
             return additional_slave_SAE_IDs;
         }
         AS_JSON(KeyRequest, number, size, additional_slave_SAE_IDs);
-   
     };
 }
 
@@ -237,7 +306,6 @@ public:
 protected:
     void onReceivedRequest(const CppServer::HTTP::HTTPRequest& request) override
     {
-        
         // Show HTTP request content
         std::cout << std::endl << request;
 
@@ -246,36 +314,32 @@ protected:
             SendResponseAsync(response().MakeHeadResponse());
         else if (request.method() == "GET")
         {
-            std::string key(request.url());
-            std::string value;
+            std::string url(request.url());
             
-            if (key.ends_with("/status")) 
+            if (url.ends_with("/status")) 
             {
-                key = CppCommon::Encoding::URLDecode(key);                     
-                CppCommon::StringUtils::ReplaceFirst(key, "/api/v1/keys/", "");
-                CppCommon::StringUtils::ReplaceFirst(key, "/status", "");
+                std::string SAE_ID = CppCommon::Encoding::URLDecode(url);                     
+                CppCommon::StringUtils::ReplaceFirst(SAE_ID, "/api/v1/keys/", "");
+                CppCommon::StringUtils::ReplaceFirst(SAE_ID, "/status", "");
 
                 qkdtypes::Status status;
 
-                if (StatusStorage::GetInstance().GetStatusValue(key, status))                   
+                if (StatusStorage::GetInstance().GetStatusValue(SAE_ID, status))                   
                 {                                                                          
                     nlohmann::ordered_json jsonStatus = status;
                     SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
                 }
                 else
-                    SendResponseAsync(response().MakeErrorResponse(404, "Required Status value was not found for the SAE ID: " + key));
+                    SendResponseAsync(response().MakeErrorResponse(404, "Required Status value was not found for the SAE ID: " + SAE_ID));
             }
-            else if (key.find("/enc_keys") != std::string::npos)
+            else if (url.find("/enc_keys") != std::string::npos)
             {   
-                //if (request.body_length() == 0)   //Svakako je body 0 jer je GET zahtjev, pa ne treba ovaj uslov ??
-                // Ovaj dio je za slucajeve kada u POST zahtjevu imamo samo number i size (ili bar jedno od to dvoje) jer se onda salje GET zahtjev s tim parametrima
-                //{
-                    if (key.find("size=") != std::string::npos && key.find("number=") != std::string::npos)
+                    if (url.find("size=") != std::string::npos && url.find("number=") != std::string::npos)
                     {
-                        key = CppCommon::Encoding::URLDecode(key);
-                        CppCommon::StringUtils::ReplaceFirst(key, "/api/v1/keys/", "");
-                        CppCommon::StringUtils::ReplaceFirst(key, "/enc_keys?", "");
-                        std::vector<std::string> url1 = CppCommon::StringUtils::Split(key, "number=");
+                        url = CppCommon::Encoding::URLDecode(url);
+                        CppCommon::StringUtils::ReplaceFirst(url, "/api/v1/keys/", "");
+                        CppCommon::StringUtils::ReplaceFirst(url, "/enc_keys?", "");
+                        std::vector<std::string> url1 = CppCommon::StringUtils::Split(url, "number=");
                         std::string SAE_ID = url1[0];
                         std::vector<std::string> url2 = CppCommon::StringUtils::Split(url1[1], "&size=");
                         int number = std::stoi(url2[0]);
@@ -291,22 +355,21 @@ protected:
                             qkdtypes::KeyContainer keyContainer1;
                             for (auto i = keyContainer.getKeys().begin(); i != keyContainer.getKeys().end(); i++)
                             {
-                                if (i->key.size() == size) keyContainer1.getKeys().push_back(*i);
+                                if (i->getKey().size() == size) keyContainer1.getKeys().push_back(*i);
                                 if (keyContainer1.getKeys().size() == number) break;
                             }
                             nlohmann::ordered_json jsonStatus = keyContainer1;
                             SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
                         }
                     }
-
-                    else if (key.find("number=") != std::string::npos)
+                    else if (url.find("number=") != std::string::npos)
                     {
-                        key = CppCommon::Encoding::URLDecode(key);
-                        CppCommon::StringUtils::ReplaceFirst(key, "/api/v1/keys/", "");
-                        CppCommon::StringUtils::ReplaceFirst(key, "/enc_keys?", "");
-                        std::vector<std::string> kljucevi = CppCommon::StringUtils::Split(key, "number=");
-                        std::string SAE_ID = kljucevi[0];
-                        int number = std::stoi(kljucevi[1]);
+                        url = CppCommon::Encoding::URLDecode(url);
+                        CppCommon::StringUtils::ReplaceFirst(url, "/api/v1/keys/", "");
+                        CppCommon::StringUtils::ReplaceFirst(url, "/enc_keys?", "");
+                        std::vector<std::string> url1 = CppCommon::StringUtils::Split(url, "number=");
+                        std::string SAE_ID = url1[0];
+                        int number = std::stoi(url1[1]);
 
                         qkdtypes::KeyContainer keyContainer;
                         KeyStorage::GetInstance().GetKeyConteinerValue(SAE_ID, keyContainer);
@@ -317,19 +380,16 @@ protected:
                             lista1.resize(number);
                         }
                         nlohmann::ordered_json jsonStatus = lista1;
-                        SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
-
-                        
+                        SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));                        
                     }
-
-                    else if (key.find("size=") != std::string::npos)
+                    else if (url.find("size=") != std::string::npos)
                     {
-                        key = CppCommon::Encoding::URLDecode(key);
-                        CppCommon::StringUtils::ReplaceFirst(key, "/api/v1/keys/", "");
-                        CppCommon::StringUtils::ReplaceFirst(key, "/enc_keys?", "");
-                        std::vector<std::string> kljucevi = CppCommon::StringUtils::Split(key, "size=");
-                        std::string SAE_ID = kljucevi[0];
-                        int size = std::stoi(kljucevi[1]);
+                        url = CppCommon::Encoding::URLDecode(url);
+                        CppCommon::StringUtils::ReplaceFirst(url, "/api/v1/keys/", "");
+                        CppCommon::StringUtils::ReplaceFirst(url, "/enc_keys?", "");
+                        std::vector<std::string> url1 = CppCommon::StringUtils::Split(url, "size=");
+                        std::string SAE_ID = url1[0];
+                        int size = std::stoi(url1[1]);
                         if (size % 8 != 0)
                         {
                             SendResponseAsync(response().MakeErrorResponse(400, "Size shall be a multiple of 8."));
@@ -340,7 +400,7 @@ protected:
                             KeyStorage::GetInstance().GetKeyConteinerValue(SAE_ID, keyContainer);
                             for (auto i = keyContainer.getKeys().begin(); i != keyContainer.getKeys().end(); i++)
                             {
-                                if (i->key.size() == size)
+                                if (i->getKey().size() == size)
                                 {
                                     keyContainer1.getKeys().push_back(*i);
                                     break;
@@ -352,58 +412,125 @@ protected:
                     }
                     else
                     {
-                        key = CppCommon::Encoding::URLDecode(key);
-                        CppCommon::StringUtils::ReplaceFirst(key, "/api/v1/keys/", "");
-                        CppCommon::StringUtils::ReplaceFirst(key, "/enc_keys", "");
-
+                        url = CppCommon::Encoding::URLDecode(url);
+                        CppCommon::StringUtils::ReplaceFirst(url, "/api/v1/keys/", "");
+                        CppCommon::StringUtils::ReplaceFirst(url, "/enc_keys", "");
                         qkdtypes::KeyContainer keyContainer;
-                        KeyStorage::GetInstance().GetKeyConteinerValue(key, keyContainer);
+                        KeyStorage::GetInstance().GetKeyConteinerValue(url, keyContainer);
                         nlohmann::ordered_json jsonStatus = keyContainer;
                         SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
                     }
-                //}
             }  
         }
         else if ((request.method() == "POST"))
         {
-        std::string key(request.url());
-        if (key.find("/enc_keys") != std::string::npos){
+            std::string key(request.url());
+            if (key.find("/enc_keys") != std::string::npos){
             key = CppCommon::Encoding::URLDecode(key);
             CppCommon::StringUtils::ReplaceFirst(key, "/api/v1/keys/", "");
             std::vector<std::string> url1 = CppCommon::StringUtils::Split(key, "/enc_keys");
             std::string SAE_ID = url1[0];
             if (request.body_length() != 0) 
             {
-                std::string body = std::string(request.body());
-                //ako pronadje u body-ju size ili number, ali ne pronadje additional slave, posalji GET request sa tim parametrima
-                if (body.find("\"additional_slave_SAE_IDs\":") == std::string::npos)
+                json data = json::parse(request.body());
+                int number = data.value("number", 0);
+                int size = data.value("size", 0);
+                json slave_IDs = data["additional_slave_SAE_IDs"];
+
+                if (number != 0 && size != 0 && slave_IDs.size() != 0)
                 {
-                    if (body.find("\"number\":") != std::string::npos && body.find("\"size\":") != std::string::npos)
+                    if (size % 8 != 0)
                     {
-                        std::string testnumber = body.substr(body.find("\"number\": ") + 10, body.find(",\n") - (body.find("\"number\": ") + 10));
-                        std::string testsize = body.substr(body.find("\"size\": ") + 8, body.find("\n}") - (body.find("\"size\": ") + 8));
-                        CppServer::HTTP::HTTPRequest request1;
-                        request1.SetBegin("GET", "/api/v1/keys/" + SAE_ID + "/enc_keys?number=" + testnumber + "&size=" + testsize);
-                        onReceivedRequest(request1);
-                        std::cout << request1;
+                        SendResponseAsync(response().MakeErrorResponse(400, "Size shall be a multiple of 8."));
                     }
-                    else if (body.find("\"number\":") != std::string::npos)
+                    else
                     {
-                        std::string testnumber = body.substr(body.find("\"number\": ") + 10, body.find("\n}") - (body.find("\"number\": ") + 10));
-                        CppServer::HTTP::HTTPRequest request1;
-                        request1.SetBegin("GET", "/api/v1/keys/" + SAE_ID + "/enc_keys?number=" + testnumber);
-                        onReceivedRequest(request1);
-                    }
-                    else if (body.find("\"size\":") != std::string::npos)
-                    {
-                        std::string testsize = body.substr(body.find("\"size\": ") + 8, body.find("\n}") - (body.find("\"size\": ") + 8));
-                        CppServer::HTTP::HTTPRequest request1;
-                        request1.SetBegin("GET", "/api/v1/keys/" + SAE_ID + "/enc_keys?size=" + testsize);
-                        onReceivedRequest(request1);
+                        qkdtypes::KeyContainer keyContainer;
+                        KeyStorage::GetInstance().GetKeyConteinerValue(SAE_ID, keyContainer);
+                        qkdtypes::KeyContainer keyContainer1;
+                        for (auto i = keyContainer.getKeys().begin(); i != keyContainer.getKeys().end(); i++)
+                        {   // (i->key.size())
+                            if (i->getKey().size() == size) 
+                            {
+                                keyContainer1.getKeys().push_back(*i);
+                                keyContainer.getKeys().erase(i);
+                            }
+                            if (keyContainer1.getKeys().size() == number) break;
+                        }
+                        for (int i = 0; i < slave_IDs.size(); i++) 
+                        {
+                           KeyStorage::GetInstance().PutKeyContainerValue(slave_IDs[i], keyContainer1);
+                        }
+                        nlohmann::ordered_json jsonStatus = keyContainer1;
+                        SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
+
                     }
                 }
-                
-                
+                else if (number != 0 && slave_IDs.size() != 0)
+                {
+                    qkdtypes::KeyContainer keyContainer;
+                    KeyStorage::GetInstance().GetKeyConteinerValue(SAE_ID, keyContainer);
+                    qkdtypes::KeyContainer keyContainer1 = keyContainer;
+                    std::list<qkdtypes::Key> lista1 = keyContainer1.getKeys();
+                    if (number < lista1.size())
+                    {
+                        lista1.resize(number);
+                    }
+                    for (int i = 0; i < slave_IDs.size(); i++)
+                    {
+                        KeyStorage::GetInstance().PutKeyContainerValue(slave_IDs[i], lista1);
+                    }
+                    nlohmann::ordered_json jsonStatus = lista1;
+                    SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
+                }
+                else if (size != 0 && slave_IDs.size() != 0)
+                {
+                    if (size % 8 != 0)
+                    {
+                        SendResponseAsync(response().MakeErrorResponse(400, "Size shall be a multiple of 8."));
+                    }
+                    else
+                    {
+                        qkdtypes::KeyContainer keyContainer, keyContainer1;
+                        KeyStorage::GetInstance().GetKeyConteinerValue(SAE_ID, keyContainer);
+                        for (auto i = keyContainer.getKeys().begin(); i != keyContainer.getKeys().end(); i++)
+                        {
+                            if (i->getKey().size() == size)
+                            {
+                                keyContainer1.getKeys().push_back(*i);
+                                break;
+                            }
+                        }
+                        for (int i = 0; i < slave_IDs.size(); i++)
+                        {
+                            KeyStorage::GetInstance().PutKeyContainerValue(slave_IDs[i], keyContainer1);
+                        }
+                        nlohmann::ordered_json jsonStatus = keyContainer1;
+                        SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
+                    }
+                }
+                else if (number != 0 && size != 0) 
+                {
+                    CppServer::HTTP::HTTPRequest request1;
+                    request1.SetBegin("GET", "/api/v1/keys/" + SAE_ID + "/enc_keys?number=" + std::to_string(number) + "&size=" + std::to_string(size));
+                    onReceivedRequest(request1);
+                }
+                else if (number != 0)
+                {
+                    CppServer::HTTP::HTTPRequest request1;
+                    request1.SetBegin("GET", "/api/v1/keys/" + SAE_ID + "/enc_keys?number=" + std::to_string(number));
+                    onReceivedRequest(request1);
+                }
+                else if (size != 0)
+                {
+                    CppServer::HTTP::HTTPRequest request1;
+                    request1.SetBegin("GET", "/api/v1/keys/" + SAE_ID + "/enc_keys?size=" + std::to_string(size));
+                    onReceivedRequest(request1);
+                }
+                else if (slave_IDs.size() != 0)
+                {
+                    
+                }                
             }
             else 
             {
@@ -416,7 +543,7 @@ protected:
                 nlohmann::ordered_json jsonStatus = keyContainer;
                 SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
             }
-        }
+            }
         }
         else if (request.method() == "OPTIONS")
             SendResponseAsync(response().MakeOptionsResponse());
@@ -466,16 +593,6 @@ int main(int argc, char** argv)
     keyContainer.getKeys().push_back(qkdtypes::Key("id3", "key33456"));
     KeyStorage::GetInstance().PutKeyContainerValue("JJJJKKKKLLLL", keyContainer);
     
-   /* qkdtypes::KeyRequest request1(1, 8, {"AAAABBBBCCCC"});
-    nlohmann::ordered_json jsonStatus1 = request1;
-    
-    CppServer::HTTP::HTTPRequest request2;
-    std::string SAE_ID = "JJJJKKKKLLLL";
-    std::string testnumber = "1";
-    std::string testsize = "1";
-    request2.SetBegin("GET", "/api/v1/keys/" + SAE_ID + "/enc_keys?number=" + testnumber + "&size=" + testsize);*/
-
-
     // HTTPS server port
     int port = 8443;
     if (argc > 1)

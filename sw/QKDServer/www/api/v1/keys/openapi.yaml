@@ -107,7 +107,7 @@ paths:
         description: additional_slave_SAE_IDs
         required: false
         content:
-          text/plain:
+          application/json:
             schema:
               type: object
               properties:
@@ -116,7 +116,9 @@ paths:
                size:
                 type: integer
                additional_slave_SAE_IDs:
-                type: string
+                type: array
+                items:
+                  type: string
       responses:
         200:
           description: Success
