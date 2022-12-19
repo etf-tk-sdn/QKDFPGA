@@ -12,7 +12,9 @@ servers:
 tags:
 - name: Status
   description: Status methods
-- name: Key
+- name: Get Key
+  description: Key methods
+- name: Get Key with IDs
   description: Key methods
 
 paths:
@@ -49,7 +51,7 @@ paths:
   /{SAEId}/enc_keys:
     get:
       tags:
-      - Key
+      - Get Key
       summary: Get the key container object
       operationId: GetKeyContainerObject
       parameters:
@@ -92,7 +94,7 @@ paths:
           content: {}
     post:
       tags:
-      - Key
+      - Get Key
       summary: Create the key container object
       operationId: CreateKeyContainerObject
       parameters:
@@ -119,6 +121,83 @@ paths:
                 type: array
                 items:
                   type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+            text/plain:
+              schema:
+                type: string
+        404:
+          description: Not found
+          content: {}
+        500:
+          description: Internal server error
+          content: {} 
+  /{SAEId}/dec_keys:
+    get:
+      tags:
+      - Get Key with IDs
+      summary: Get the key with Key ID
+      operationId: GetKeyWithKeyID
+      parameters:
+      - name: SAEId
+        in: path
+        description: SAE ID
+        required: true
+        schema:
+          type: string
+          example: 'GGGGHHHHIIII'
+      - name: key_ID
+        in: query
+        description: Key_ID
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+            text/plain:
+              schema:
+                type: string
+        404:
+          description: Key container key not found
+          content: {}
+        500:
+          description: Internal server error
+          content: {}
+    post:
+      tags:
+      - Get Key with IDs
+      summary: Get the key container object
+      operationId: GetKeyContainerObject
+      parameters:
+      - name: SAEId
+        in: path
+        description: SAE ID
+        required: true
+        schema:
+          type: string
+          example: 'GGGGHHHHIIII'
+      requestBody:
+        description: keyIDs
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+               key_IDs:    
+                type: array
+                items:
+                 type: string
       responses:
         200:
           description: Success
