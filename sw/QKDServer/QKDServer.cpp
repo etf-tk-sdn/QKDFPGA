@@ -87,6 +87,39 @@ std::string base64_encode(uint8_t const* buf, unsigned int bufLen) {
     return ret;
 }
 
+//Pretvaranje Public Key-a u string
+
+std::string EVP_PKEY_to_PEM(EVP_PKEY* key) {      
+
+    BIO* bio = NULL;
+    char* pem = NULL;
+
+    if (NULL == key) {
+        return NULL;
+    }
+
+    bio = BIO_new(BIO_s_mem());
+    if (NULL == bio) {
+        return NULL;
+    }
+
+    if (0 == PEM_write_bio_PUBKEY(bio, key)) {
+        BIO_free(bio);
+        return NULL;
+    }
+
+    pem = (char*)malloc(BIO_number_written(bio) + 1);
+    if (NULL == pem) {
+        BIO_free(bio);
+        return NULL;
+    }
+
+    memset(pem, 0, BIO_number_written(bio) + 1);
+    BIO_read(bio, pem, int(BIO_number_written(bio)));
+    BIO_free(bio);
+    return pem;
+}
+
 namespace qkdtypes 
 {
     class Status {
@@ -329,7 +362,7 @@ public:
     void PutKeyContainerValue(std::string_view SAE_ID, qkdtypes::KeyContainer value)
     {
         std::scoped_lock locker(_keyStorage_lock);
-        auto it = _keyStorage.emplace( SAE_ID, value );
+        auto it = _keyStorage.emplace(SAE_ID, value);
         if (!it.second)
             it.first->second = value;
     }
@@ -375,7 +408,7 @@ public:
             int key_size = (it->second).getKey_Size();
             int stored_key_count = int(q.size()) * 8 / key_size;    //potrebna konverzija u int jer je size() size_t
 
-           //update stored_key_count
+            //update stored_key_count
             value.setStored_Key_Count(stored_key_count);
             return true;
         }
@@ -415,8 +448,46 @@ class HTTPSQKDSession : public CppServer::HTTP::HTTPSSession
 {
 public:
     using CppServer::HTTP::HTTPSSession::HTTPSSession;
-   
+
 protected:
+
+    std::string getClientId() {
+
+        OpenSSL_add_all_algorithms();
+        ERR_load_BIO_strings();
+        ERR_load_crypto_strings();
+        this->stream().handshake(asio::ssl::stream<asio::ip::tcp::socket>::client);
+        //std::cout << "native_handle() = " << this->stream().native_handle() << std::endl;
+        X509* cert = SSL_get_peer_certificate(this->stream().native_handle());
+        BIO* bp = BIO_new_fp(stdout, BIO_NOCLOSE);
+ 
+        //std::cout << "X509* cert = " << cert << std::endl;
+        if (cert) {
+            if (SSL_get_verify_result(this->stream().native_handle()) == X509_V_OK) {
+                // std::cout << "SSL OK" << std::endl;
+                EVP_PKEY* pubkey = X509_get_pubkey(cert);
+               // std::cout << "Subject: " << X509_NAME_oneline(X509_get_subject_name(cert), 0, 0) << std::endl;
+                if (pubkey) {
+                    switch (EVP_PKEY_id(pubkey)) {
+                    case EVP_PKEY_RSA:
+                        BIO_printf(bp, "%d bit RSA Key\n\n", EVP_PKEY_bits(pubkey));
+                        break;
+                    case EVP_PKEY_DSA:
+                        BIO_printf(bp, "%d bit DSA Key\n\n", EVP_PKEY_bits(pubkey));
+                        break;
+                    default:
+                        BIO_printf(bp, "%d bit non-RSA/DSA Key\n\n", EVP_PKEY_bits(pubkey));
+                        break;
+                    }
+                }
+                //PEM_write_bio_PUBKEY(bp, pubkey);
+                std::cout << "Public key: " << EVP_PKEY_to_PEM(pubkey);
+                EVP_PKEY_free(pubkey);
+            }
+        }
+        return "";
+    }
+
     void onReceivedRequest(const CppServer::HTTP::HTTPRequest& request) override
     {
         // Show HTTP request content
@@ -427,6 +498,8 @@ protected:
             SendResponseAsync(response().MakeHeadResponse());
         else if (request.method() == "GET")
         {
+            getClientId();
+
             std::string url(request.url());
             std::string SAE_ID;
             int number = 0, size=0;
@@ -569,7 +642,7 @@ protected:
                         if (i->getKey_ID() == key_ID_url)
                         {
                             exist_key_ID = true;
-                            keyContainer1.getKeys().push_back(qkdtypes::Key(i->getKey(), i->getKey_ID()));
+                            keyContainer1.getKeys().push_back(qkdtypes::Key(i->getKey_ID(), i->getKey()));
                             nlohmann::ordered_json jsonStatus = keyContainer1;
                             SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
                             it = i;
@@ -602,9 +675,9 @@ protected:
                 std::vector<std::string> url1 = CppCommon::StringUtils::Split(url, "/enc_keys");
                 std::string SAE_ID = url1[0];
                 qkdtypes::Status status;
+                if (StatusStorage::GetInstance().GetStatusValue(SAE_ID, status)) status = status;
                 int number, size;
                 json slave_IDs;
-                if (StatusStorage::GetInstance().GetStatusValue(SAE_ID, status)) status = status;
                 int default_size = status.getKey_Size();
                 if (request.body_length() != 0)   //Ako POST request ima tijelo, onda pokupi iz njeg number, size i slave_IDs
                 {
@@ -633,51 +706,71 @@ protected:
                 else
                 {
                    qkdtypes::KeyContainer keyContainer, keyContainer1, keyContainer_additional;
-                   std::string key_ID = "", encodedData;
-                   for (int z = 0; z < number; z++) 
-                   {       
-                       for (int i = 0; i < size / 8; i++) 
-                       {   
-                            key.push(raw_key.front());
-                            raw_key.pop();
-                       }
+                   std::string key_ID="",encodedData;
+                   bool additional_exist = true;
 
-                       GUID guid = { 0 };
-                       char szGuid[36] = { 0 };
-                       CoCreateGuid(&guid);
-                       sprintf(szGuid, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x", guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
-                       for (int j = 0; j < (sizeof(szGuid) / sizeof(char)); j++) 
+
+                   if (slave_IDs.size() != 0) //Ako je definisan additional_slave_ID kojeg nema u bazi, poslati poruku o gresci
+                   {
+                       for (int j = 0; j < slave_IDs.size(); j++)
                        {
-                        key_ID = key_ID + szGuid[j];
-                       }
-
-                       encodedData = base64_encode(&key.front(), int(key.size()));
-
-                       if (KeyStorage::GetInstance().GetKeyConteinerValue(status.getMaster_SAE_ID(), keyContainer)) keyContainer = keyContainer;
-                       keyContainer.getKeys().push_back(qkdtypes::Key(key_ID, encodedData));
-                       keyContainer1.getKeys().push_back(qkdtypes::Key(key_ID, encodedData));
-
-                       for (int j = 0; j<int(key.size()); j++) //Praznjenje kljuca kako nove vrijednosti ne bi uticale na novi kljuc
-                       {
-                           key.pop();
+                           qkdtypes::Status status_additional;
+                           if (!StatusStorage::GetInstance().GetStatusValue(slave_IDs[j], status_additional))
+                           {
+                               additional_exist = false;
+                               SendResponseAsync(response().MakeErrorResponse(400, "One or more additional slave IDs don't exist in storage."));
+                               break;
+                           }
                        }
                    }
-                
-                   RawKeyStorage::GetInstance().PutRawKeyValue(KME_ID, raw_key); //Azuriranje raw-key-a u storage-u
-                   KeyStorage::GetInstance().PutKeyContainerValue(status.getMaster_SAE_ID(), keyContainer); //Azuriranje kljuceva u bazi kljuceva sa ID-evima
-                   nlohmann::ordered_json jsonStatus = keyContainer1; //keyContainer1 (set key + key ID-eva  )se vraca kao odgovor
-                   SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
 
-                   if (slave_IDs.size() != 0) //Ukoliko su definisani i dodatni ID-evi, upisuje kreirane kljuceve i za njih
-                   {
-                      for (int j = 0; j < slave_IDs.size(); j++)
-                      {
-                           qkdtypes::Status status_additional;
-                           if (StatusStorage::GetInstance().GetStatusValue(slave_IDs[j], status_additional)) status_additional = status_additional;
-                           if (KeyStorage::GetInstance().GetKeyConteinerValue(status_additional.getMaster_SAE_ID(), keyContainer_additional)) keyContainer_additional = keyContainer_additional;
-                           keyContainer_additional.getKeys().push_back(qkdtypes::Key(key_ID, encodedData));
-                           (KeyStorage::GetInstance().PutKeyContainerValue(status_additional.getMaster_SAE_ID(), keyContainer_additional));
-                      }
+                   if (additional_exist) {
+                       for (int z = 0; z < number; z++)
+                       {
+                           key_ID = "";
+                           for (int i = 0; i < size / 8; i++)
+                           {
+                               key.push(raw_key.front());
+                               raw_key.pop();
+                           }
+
+                           GUID guid = { 0 };
+                           char szGuid[36] = { 0 };
+                           CoCreateGuid(&guid);
+                           sprintf(szGuid, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x", guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+                           for (int j = 0; j < (sizeof(szGuid) / sizeof(char)); j++)
+                           {
+                               key_ID = key_ID + szGuid[j];
+                           }
+
+                           encodedData = base64_encode(&key.front(), int(key.size()));
+
+                           if (KeyStorage::GetInstance().GetKeyConteinerValue(status.getMaster_SAE_ID(), keyContainer)) keyContainer = keyContainer;
+                           keyContainer.getKeys().push_back(qkdtypes::Key(key_ID, encodedData));
+                           keyContainer1.getKeys().push_back(qkdtypes::Key(key_ID, encodedData));
+
+                           if (slave_IDs.size() != 0) //Ukoliko su definisani i dodatni ID-evi, upisuje kreirane kljuceve i za njih
+                           {
+                               for (int j = 0; j < slave_IDs.size(); j++)
+                               {
+                                   qkdtypes::Status status_additional;
+                                   if (StatusStorage::GetInstance().GetStatusValue(slave_IDs[j], status_additional)) status_additional = status_additional;
+                                   if (KeyStorage::GetInstance().GetKeyConteinerValue(status_additional.getMaster_SAE_ID(), keyContainer_additional)) keyContainer_additional = keyContainer_additional;
+                                   keyContainer_additional.getKeys().push_back(qkdtypes::Key(key_ID, encodedData));
+                                   (KeyStorage::GetInstance().PutKeyContainerValue(status_additional.getMaster_SAE_ID(), keyContainer_additional));
+                               }
+                           }
+
+                           for (int j = 0; j<int(key.size()); j++) //Praznjenje kljuca kako nove vrijednosti ne bi uticale na novi kljuc
+                           {
+                               key.pop();
+                           }
+                       }                      
+
+                       RawKeyStorage::GetInstance().PutRawKeyValue(KME_ID, raw_key); //Azuriranje raw-key-a u storage-u
+                       KeyStorage::GetInstance().PutKeyContainerValue(status.getMaster_SAE_ID(), keyContainer); //Azuriranje kljuceva u bazi kljuceva sa ID-evima
+                       nlohmann::ordered_json jsonStatus = keyContainer1; //keyContainer1 (set key + key ID-eva  )se vraca kao odgovor
+                       SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
                    }
                 }                        
             }
@@ -704,7 +797,7 @@ protected:
                             if (i->getKey_ID() == key_IDs[j])
                             {
                                 exist_key_ID = true;
-                                keyContainer1.getKeys().push_back(qkdtypes::Key(i->getKey(), i->getKey_ID()));
+                                keyContainer1.getKeys().push_back(qkdtypes::Key(i->getKey_ID(), i->getKey()));
                                 it = i;
                                 break;
                             }
@@ -809,6 +902,9 @@ int main(int argc, char** argv)
     context->use_certificate_chain_file("../CppServer/tools/certificates/server.pem");
     context->use_private_key_file("../CppServer/tools/certificates/server.pem", asio::ssl::context::pem);
     context->use_tmp_dh_file("../CppServer/tools/certificates/dh4096.pem");
+    context->set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
+    context->load_verify_file("../CppServer/tools/certificates/ca.pem");
+    //context->set_verify_callback(asio::ssl::rfc2818_verification("*.example.com"));
 
     // Create a new HTTPS server
     //auto server = std::make_shared<HTTPSCacheServer>(service, context, port);
