@@ -26,10 +26,7 @@
 #include <queue>
 #include <bitset>
 
-
-
 using json = nlohmann::json;
-
 
 #define AS_JSON(Type, ...)                                                     \
   friend void to_json(nlohmann::ordered_json &nlohmann_json_j,                 \
@@ -46,7 +43,6 @@ static const std::string base64_chars =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 "abcdefghijklmnopqrstuvwxyz"
 "0123456789+/";
-
 
 static inline bool is_base64(uint8_t c) {
     return (isalnum(c) || (c == '+') || (c == '/'));
@@ -93,7 +89,6 @@ std::string base64_encode(uint8_t const* buf, unsigned int bufLen) {
 }
 
 //Pretvaranje Public Key-a u string
-
 std::string EVP_PKEY_to_PEM(EVP_PKEY* key) {      
 
     BIO* bio = NULL;
@@ -243,25 +238,6 @@ namespace qkdtypes
         AS_JSON(Key, key_ID, key)
     };
 
-    class Key_ID {
-    private:
-        std::string key_ID;
-    public:
-        Key_ID()
-        {
-
-        }
-        Key_ID(std::string key_ID)
-        {
-            this->key_ID = key_ID;
-        }
-        std::string& getKey_ID()
-        {
-            return key_ID;
-        }
-        AS_JSON(Key_ID, key_ID)
-    };
-
     class KeyContainer 
     {
     private:
@@ -283,126 +259,7 @@ namespace qkdtypes
     };
 }
 
-/*class RawKeyStorage : public CppCommon::Singleton<RawKeyStorage>
-{
-    friend CppCommon::Singleton<RawKeyStorage>;
-public:
-    bool GetRawKeyValue(std::pair <std::string, std::string> KME_IDs, std::queue<uint8_t>& value)
-    {
-        std::scoped_lock locker(_rawKeyStorage_lock);
-        auto it = _rawKeyStorage.find(KME_IDs);
-        if (it != _rawKeyStorage.end())
-        {
-            value = it->second;
-            return true;
-        }
-        else
-            return false;
-    }
-
-    void PutRawKeyValue(std::pair <std::string, std::string> KME_IDs, std::queue<uint8_t> value)
-    {
-        std::scoped_lock locker(_rawKeyStorage_lock);
-        auto it = _rawKeyStorage.emplace(KME_IDs, value);
-        if (!it.second)
-            it.first->second = value;
-    }
-
-private:
-    std::mutex _rawKeyStorage_lock;
-    std::map<std::pair<std::string, std::string>, std::queue<uint8_t>> _rawKeyStorage;
-};*/
-
-class KeyStorage : public CppCommon::Singleton<KeyStorage>
-{
-    friend CppCommon::Singleton<KeyStorage>;
-
-public:
-    bool GetKeyConteinerValue(std::string SAE_ID, qkdtypes::KeyContainer& value)
-    {
-        std::scoped_lock locker(_keyStorage_lock);
-        auto it = _keyStorage.find(SAE_ID);
-        if (it != _keyStorage.end())
-        {
-            value = it->second;
-            return true;
-        }
-        else
-            return false;
-    }
-
-    void PutKeyContainerValue(std::string_view SAE_ID, qkdtypes::KeyContainer value)
-    {
-        std::scoped_lock locker(_keyStorage_lock);
-        auto it = _keyStorage.emplace(SAE_ID, value);
-        if (!it.second)
-            it.first->second = value;
-    }
-
-private:
-    std::mutex _keyStorage_lock;
-    std::map<std::string, qkdtypes::KeyContainer, std::less<>> _keyStorage;
-};
-
-/*class StatusStorage : public CppCommon::Singleton<StatusStorage>
-{
-    friend CppCommon::Singleton<StatusStorage>;
-
-public:
-    bool GetStatusValue(std::string SAE_ID, qkdtypes::Status& value)
-    {
-        std::scoped_lock locker(_statusStorage_lock);
-        qkdtypes::Status oldstatus;
-        std::pair<std::string, std::string> KME_ID;
-        std::queue<uint8_t> q;
-        auto it = _statusStorage.find(SAE_ID);
-        if (it != _statusStorage.end())
-        {
-            value = it->second;
-            KME_ID = std::make_pair(value.getSource_KME_ID(), value.getTarget_KME_ID());
-
-            // calc stored_key_count
-            if (RawKeyStorage::GetInstance().GetRawKeyValue(KME_ID, q)) q = q;
-            int key_size = (it->second).getKey_Size();
-            int stored_key_count = int(q.size()) * 8 / key_size;    //potrebna konverzija u int jer je size() size_t
-
-            //update stored_key_count
-            value.setStored_Key_Count(stored_key_count);
-            return true;
-        }
-        else
-            return false;
-    }
-
-    void PutStatusValue(std::string_view SAE_ID, qkdtypes::Status value)
-    {
-        std::scoped_lock locker(_statusStorage_lock);
-        auto it = _statusStorage.emplace(SAE_ID, value);
-        if (!it.second)
-            it.first->second = value;
-    }
-
-    bool DeleteStatusValue(std::string SAE_ID, qkdtypes::Status value)
-    {
-        std::scoped_lock locker(_statusStorage_lock);
-        auto it = _statusStorage.find(SAE_ID);
-        if (it != _statusStorage.end())
-        {
-            value = it->second;
-            _statusStorage.erase(it);
-            return true;
-        }
-        else
-            return false;
-    }
-
-private:
-    std::mutex _statusStorage_lock;
-    std::map<std::string, qkdtypes::Status, std::less<>> _statusStorage;
-};*/
-
-
-class SAEPStorage : public CppCommon::Singleton<SAEPStorage>   //baza ID-eva i PublicKey-eva
+class SAEPStorage : public CppCommon::Singleton<SAEPStorage>   //baza ID-eva i PublicKey-eva - QKDAuthDB
 {
     friend CppCommon::Singleton<SAEPStorage>;
 
@@ -446,31 +303,16 @@ using statusEntry_map = multi_index_container<StatusEntry, indexed_by<
     hashed_unique<tag<struct by_key1>, member<StatusEntry, std::string, &StatusEntry::key1>>,
     hashed_unique<tag<struct by_key2>, member<StatusEntry, std::string, &StatusEntry::key2>>>>;
 
-class NewStatusStorage : public CppCommon::Singleton<NewStatusStorage>   //baza parova Master-Slave, Status-a i RawKey
+class NewStatusStorage : public CppCommon::Singleton<NewStatusStorage>   //baza parova Master-Slave, Status-a i RawKey  QKDStatusDB
 {
     friend CppCommon::Singleton<NewStatusStorage>;
 
 public:
-    bool getStatusEntry(statusEntry_map& m, std::string key, StatusEntry** entry, int k) {
+    bool getStatusEntry(statusEntry_map& m, std::string key, StatusEntry** entry) {
         //getStatusEntry se uvijek poziva nad Slave_SAE_ID
         std::scoped_lock locker(_newStatusStorage_lock);
         m = _newStatusStorage;
-        auto& key1_map = m.get<by_key1>();
         auto& key2_map = m.get<by_key2>();
-      //  std::string temp_KME;
-
-        if (k==1){
-        auto e1 = key1_map.find(key);
-        if (e1 != key1_map.end()) {
-            *entry = const_cast<StatusEntry*>(&(*e1));
-            int key_size = (*entry)->status.getKey_Size();
-            int stored_key_count = int((*entry)->rawKeys.size()) * 8 / key_size;    //potrebna konverzija u int jer je size() size_t
-            (*entry)->status.setStored_Key_Count(stored_key_count);
-
-            return true;
-        }
-        }
-        else if (k==2){
         auto e2 = key2_map.find(key);
         if (e2 != key2_map.end()) {
             *entry = const_cast<StatusEntry*>(&(*e2));
@@ -478,7 +320,6 @@ public:
             int stored_key_count = int((*entry)->rawKeys.size()) * 8 / key_size;
             (*entry)->status.setStored_Key_Count(stored_key_count);
             return true;
-        }
         }
 
         return false;
@@ -507,7 +348,7 @@ private:
 };
 
 
-class NewKeyStorage : public CppCommon::Singleton<NewKeyStorage>
+class NewKeyStorage : public CppCommon::Singleton<NewKeyStorage>    //QKDKeysDB
 {
     friend CppCommon::Singleton<NewKeyStorage>;
 
@@ -608,10 +449,8 @@ protected:
     {
         statusEntry_map m;
         StatusEntry* e1;
-        int k;
 
-        //std::cout << getCallerSAEId() << std::endl;
-        getCallerSAEId();
+        std::cout << getCallerSAEId() << std::endl;
         if (callerSAEId == "")
         {
             SendResponseAsync(response().MakeErrorResponse(401, "Unauthorized"));
@@ -636,7 +475,7 @@ protected:
                 CppCommon::StringUtils::ReplaceFirst(SAE_ID, "/api/v1/keys/", "");
                 CppCommon::StringUtils::ReplaceFirst(SAE_ID, "/status", "");
 
-                if (NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1, k=2))
+                if (NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1))
                 {
                     if (e1->status.getMaster_SAE_ID() != callerSAEId) 
                     {   
@@ -663,7 +502,7 @@ protected:
                     {
                         std::vector<std::string> url1 = CppCommon::StringUtils::Split(url, "?number=");
                         SAE_ID = url1[0];
-                        if (!NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1, k = 2))
+                        if (!NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1))
                         {
                             SendResponseAsync(response().MakeErrorResponse(404, "SAE_ID not found."));
                             return;
@@ -677,7 +516,7 @@ protected:
                         std::vector<std::string> url1 = CppCommon::StringUtils::Split(url, "?number=");
                         SAE_ID = url1[0];
                         number = std::stoi(url1[1]);
-                        if (!NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1, k = 2))
+                        if (!NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1))
                         {
                             SendResponseAsync(response().MakeErrorResponse(404, "SAE_ID not found."));
                             return;
@@ -688,7 +527,7 @@ protected:
                     {
                         std::vector<std::string> url1 = CppCommon::StringUtils::Split(url, "?size=");
                         SAE_ID = url1[0];
-                        if (!NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1, k = 2))
+                        if (!NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1))
                         {
                             SendResponseAsync(response().MakeErrorResponse(404, "SAE_ID not found."));
                             return;
@@ -700,7 +539,7 @@ protected:
                     {
                         SAE_ID = url;
                         number = 1; //default-na vrijednost
-                        if (!NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1, k = 2))
+                        if (!NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1))
                         {
                             SendResponseAsync(response().MakeErrorResponse(404, "SAE_ID not found."));
                             return;
@@ -709,10 +548,6 @@ protected:
                     }
 
                     qkdtypes::Status status;
-                    //if (!NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1))
-                    //{
-                    //    SendResponseAsync(response().MakeErrorResponse(404, "SAE_ID not found."));
-                    //}
                     if (e1->status.getMaster_SAE_ID() != callerSAEId) {
                         SendResponseAsync(response().MakeErrorResponse(401, "Unauthorized"));
                         return;
@@ -756,9 +591,6 @@ protected:
                                 std::string encodedData = base64_encode(&key.front(), int(key.size()));
 
                                 //keyContainer1 je novi key+key ID koji ce se ispisati
-                                //keyContainer uzima u obzir ako je prethodno vec bilo key+key ID-eva vezanih za trazeni SAE_ID, i dodaje na njih novi key+key ID
-                                //if (KeyStorage::GetInstance().GetKeyConteinerValue(e1->status.getMaster_SAE_ID(), keyContainer)) keyContainer = keyContainer;
-//                                keyContainer.getKeys().push_back(qkdtypes::Key(key_ID, encodedData));
                                 keyContainer1.getKeys().push_back(qkdtypes::Key(key_ID, encodedData));
                                 NewKeyStorage::GetInstance().PutNewKeyContainerValue(std::make_pair(e1->status.getSlave_SAE_ID(), key_ID),std::make_pair(e1->status.getMaster_SAE_ID(),encodedData));
 
@@ -774,7 +606,6 @@ protected:
                             novi.rawKeys = raw_key;
                             novi.status = e1->status; //azurirati status
                             NewStatusStorage::GetInstance().PutStatusEntry(novi);
-                          //  KeyStorage::GetInstance().PutKeyContainerValue((e1->status).getMaster_SAE_ID(), keyContainer); //Azuriranje kljuceva u bazi kljuceva sa ID-evima
                             nlohmann::ordered_json jsonStatus = keyContainer1; //keyContainer1 (set key + key ID-eva) se vraca kao odgovor
                             SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
                         }
@@ -788,55 +619,8 @@ protected:
                 std::vector<std::string> url1 = CppCommon::StringUtils::Split(url, "key_ID=");
                 SAE_ID = url1[0];
                 std::string key_ID_url = url1[1]; //Key_ID mora biti specificiran, nema defaultnih vrijednosti kao za number i size
-               // bool exist_key_ID = false;   
                 std::pair<std::string,std::string> key_MasterID;
                 qkdtypes::KeyContainer keyContainer;
-
-                /*if (NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1, k = 1))
-                {
-                    if (e1->status.getSlave_SAE_ID() != callerSAEId) {
-                        SendResponseAsync(response().MakeErrorResponse(401, "Unauthorized"));
-                        return;
-                    }
-                    else
-                    {
-                        if (KeyStorage::GetInstance().GetKeyConteinerValue(SAE_ID, keyContainer)) //Ukoliko se master_SAE_ID nalazi u KeyStorage-u jer prethodno nije bilo GetKeys zahtjeva?
-                        {
-                            keyContainer = keyContainer;
-                            auto it = keyContainer.getKeys().begin();
-                            for (auto i = keyContainer.getKeys().begin(); i != keyContainer.getKeys().end(); i++)
-                            {
-                                if (i->getKey_ID() == key_ID_url)
-                                {
-                                    exist_key_ID = true;
-                                    keyContainer1.getKeys().push_back(qkdtypes::Key(i->getKey_ID(), i->getKey()));
-                                    nlohmann::ordered_json jsonStatus = keyContainer1;
-                                    SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
-                                    it = i;
-                                    break;
-                                }
-                            }
-                            if (exist_key_ID == true)
-                            {
-                                keyContainer.getKeys().erase(it);
-                                KeyStorage::GetInstance().PutKeyContainerValue(SAE_ID, keyContainer);  //azurira bazu sa izbrisanim ID-em
-                            }
-                            else if (exist_key_ID == false)
-                            {
-                                SendResponseAsync(response().MakeErrorResponse(400, "One or more keys specified are not found on KME."));
-                            }
-                        }
-                        else //ukoliko se master_SAE_ID ne nalazi u KeyStorage-u jer prethodno nije bilo GetKeys zahtjeva?
-                        {
-                            SendResponseAsync(response().MakeErrorResponse(400, "SAE_ID not found."));
-                        }
-                    }
-                }
-                else //ukoliko uopce nema trazenog ID-a u bazi
-                {
-                    SendResponseAsync(response().MakeErrorResponse(400, "SAE_ID not found."));
-                }*/
-                
 
                 if (NewKeyStorage::GetInstance().GetNewKeyConteinerValue(std::make_pair(callerSAEId, key_ID_url), key_MasterID))
                 {
@@ -856,8 +640,7 @@ protected:
                 else //ukoliko uopce nema trazenog ID-a u bazi
                 {
                     SendResponseAsync(response().MakeErrorResponse(400, "One or more keys specified are not found on KME."));
-                }
-                
+                }       
             }
         }
         else if ((request.method() == "POST"))
@@ -870,7 +653,7 @@ protected:
                 std::vector<std::string> url1 = CppCommon::StringUtils::Split(url, "/enc_keys");
                 std::string SAE_ID = url1[0];
                 qkdtypes::Status status;
-                if (!NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1, k = 2))
+                if (!NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1))
                 {
                     SendResponseAsync(response().MakeErrorResponse(404, "SAE_ID not found."));
                     return;
@@ -899,9 +682,7 @@ protected:
                        size = default_size;
                     }
 
-                    //std::pair<std::string, std::string> KME_ID = std::make_pair(status.getSource_KME_ID(), status.getTarget_KME_ID());
                     std::queue<uint8_t> raw_key, raw_key_additional,raw_key_1,key;
-                    //RawKeyStorage::GetInstance().GetRawKeyValue(KME_ID, raw_key);
                     raw_key = e1->rawKeys;
                     if (size % 8 != 0)
                     {
@@ -915,24 +696,7 @@ protected:
                     {
                         qkdtypes::KeyContainer keyContainer, keyContainer1, keyContainer_additional;
                         std::string key_ID="",encodedData;
-                       // bool additional_exist = true;
-
-                        /*if (slave_IDs.size() != 0) //Ako je definisan additional_slave_ID kojeg nema u bazi, poslati poruku o gresci
-                        {
-                           for (int j = 0; j < slave_IDs.size(); j++)
-                           {
-                              qkdtypes::Status status_additional;
-                              if (!NewStatusStorage::GetInstance().getStatusEntry(m, slave_IDs[j], &e1, k = 2))
-                              {
-                                  additional_exist = false;
-                                  SendResponseAsync(response().MakeErrorResponse(400, "One or more additional slave IDs don't exist in storage."));
-                                  return;
-                              }
-                           }
-                        }*/
-
-                        //if (additional_exist) 
-                        //{
+                       
                            for (int z = 0; z < number; z++)
                            {
                                key_ID = "";
@@ -952,9 +716,6 @@ protected:
                                }
 
                                encodedData = base64_encode(&key.front(), int(key.size()));
-
-                               //if (KeyStorage::GetInstance().GetKeyConteinerValue(status.getMaster_SAE_ID(), keyContainer)) keyContainer = keyContainer;
-                               //keyContainer.getKeys().push_back(qkdtypes::Key(key_ID, encodedData));
                                keyContainer1.getKeys().push_back(qkdtypes::Key(key_ID, encodedData));
                                NewKeyStorage::GetInstance().PutNewKeyContainerValue(std::make_pair(e1->status.getSlave_SAE_ID(), key_ID), std::make_pair(e1->status.getMaster_SAE_ID(), encodedData));
                               
@@ -962,11 +723,6 @@ protected:
                                {
                                    for (int j = 0; j < slave_IDs.size(); j++)
                                    {
-                                      //  qkdtypes::Status status_additional;
-                                      //  if (NewStatusStorage::GetInstance().getStatusEntry(m, slave_IDs[j], &e2, k = 2)) status_additional = e2->status;
-                                      //  (KeyStorage::GetInstance().GetKeyConteinerValue(status_additional.getMaster_SAE_ID(), keyContainer_additional));
-                                      //  keyContainer_additional.getKeys().push_back(qkdtypes::Key(key_ID, encodedData));
-                                      //  (KeyStorage::GetInstance().PutKeyContainerValue(status_additional.getMaster_SAE_ID(), keyContainer_additional));
                                       NewKeyStorage::GetInstance().PutNewKeyContainerValue(std::make_pair(slave_IDs[j], key_ID), std::make_pair(callerSAEId, encodedData));
                                    }
                                }
@@ -977,20 +733,15 @@ protected:
                                }
                            }
 
-                       //RawKeyStorage::GetInstance().PutRawKeyValue(KME_ID, raw_key); //Azuriranje raw-key-a u storage-u
                        StatusEntry novi;
-
                        novi.key1 = e1->key1;
                        novi.key2 = e1->key2;
                        novi.rawKeys = raw_key;
                        novi.status = e1->status; //azurirati status
-
                        NewStatusStorage::GetInstance().PutStatusEntry(novi);
-                      // KeyStorage::GetInstance().PutKeyContainerValue(status.getMaster_SAE_ID(), keyContainer); //Azuriranje kljuceva u bazi kljuceva sa ID-evima
-                       
+                      
                        nlohmann::ordered_json jsonStatus = keyContainer1; //keyContainer1 (set key + key ID-eva  )se vraca kao odgovor
                        SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
-                   // }
                 }
             }                        
         }
@@ -1003,53 +754,9 @@ protected:
                 qkdtypes::KeyContainer keyContainer, keyContainer1;
                 json data = json::parse(request.body());
                 json key_IDs = data["key_IDs"];
-              //  bool exist_key_ID = false;
                 std::pair<std::string, std::string> key_MasterID;
 
-               /* if (NewStatusStorage::GetInstance().getStatusEntry(m, SAE_ID, &e1, k = 1))
-                {
-                    if (e1->status.getSlave_SAE_ID() != callerSAEId) {
-                        SendResponseAsync(response().MakeErrorResponse(401, "Unauthorized"));
-                        return;
-                    }
-                }
-                else
-                { 
-                    if (KeyStorage::GetInstance().GetKeyConteinerValue(SAE_ID, keyContainer))
-                    {
-                        keyContainer = keyContainer;
-                        auto it = keyContainer.getKeys().begin();
-                        for (int j = 0; j < key_IDs.size(); j++) //Za svaki key_ID iz tijela zahtjeva radi isto kao u slucaju GET zahtjeva kada je specificiran jedan ID
-                        {
-                            exist_key_ID = false;
-                            for (auto i = keyContainer.getKeys().begin(); i != keyContainer.getKeys().end(); i++)
-                            {
-                                if (i->getKey_ID() == key_IDs[j])
-                                {
-                                    exist_key_ID = true;
-                                    keyContainer1.getKeys().push_back(qkdtypes::Key(i->getKey_ID(), i->getKey()));
-                                    it = i;
-                                    break;
-                                }
-                            }
-                            if (exist_key_ID == true) 
-                            {
-                                keyContainer.getKeys().erase(it);
-                                KeyStorage::GetInstance().PutKeyContainerValue(SAE_ID, keyContainer);  //azurira bazu sa izbrisanim ID-em
-                            }
-                            else if (exist_key_ID == false)  //Cim nadje prvi da ne postoji, vraca odgovor da bar jedan key nije pronadjen
-                            {
-                                SendResponseAsync(response().MakeErrorResponse(400, "One or more keys specified are not found on KME."));
-                            }
-                        }
-                        nlohmann::ordered_json jsonStatus = keyContainer1;
-                        SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
-                    }
-                    else //ukoliko se master_SAE_ID ne nalazi u KeyStorage-u jer prethodno nije bilo GetKeys zahtjeva?
-                    {
-                        SendResponseAsync(response().MakeErrorResponse(400, "SAE_ID not found"));
-                    }
-                }*/
+              
                 for (int j = 0; j < key_IDs.size(); j++) {
                     if (!NewKeyStorage::GetInstance().GetNewKeyConteinerValue(std::make_pair(callerSAEId, key_IDs[j]), key_MasterID))
                     {
@@ -1116,17 +823,22 @@ protected:
 
 int main(int argc, char** argv)
 {
-    //StatusStorage::GetInstance().PutStatusValue("JJJJKKKKLLLL", { "AAAABBBBCCCC", "DDDDEEEEFFFF", "GGGGHHHHIIII", "JJJJKKKKLLLL", 8, 25000, 100000, 128, 1024, 64, 0});
-    //StatusStorage::GetInstance().PutStatusValue("JJKKLL", { "AABBCC", "DDEEFF", "GGHHII", "JJKKLL", 8, 25000, 100000, 128, 1024, 64, 0 });
-    //StatusStorage::GetInstance().PutStatusValue("JJJKKKLLL", { "AAABBBCCC", "DDDEEEFFF", "GGGHHHIII", "JJJKKKLLL", 8, 25000, 100000, 128, 1024, 64, 0 });
-
-    std::pair<std::string, std::string> KME_IDs = {"AAAABBBBCCCC","DDDDEEEEFFFF"};
     std::queue<std::uint8_t> raw_key;
     raw_key.push(0b00000011);
     raw_key.push(0b01101010);
     raw_key.push(0b10001011);
-    std::string x;
-    //RawKeyStorage::GetInstance().PutRawKeyValue(KME_IDs, raw_key); 
+
+    raw_key.push(0b00000011);
+    raw_key.push(0b01101010);
+    raw_key.push(0b10001011);
+
+    raw_key.push(0b00000011);
+    raw_key.push(0b01101010);
+    raw_key.push(0b10001011);
+
+    raw_key.push(0b00000011);
+    raw_key.push(0b01101010);
+    raw_key.push(0b10001011);
 
     std::string pubkey = 
         "-----BEGIN PUBLIC KEY-----\n"
@@ -1178,11 +890,8 @@ int main(int argc, char** argv)
     SAEPStorage::GetInstance().PutSaepValue(pubkey2, "AAAA");
 
     StatusEntry e = { "GGGGHHHHIIII", "JJJJKKKKLLLL", {"AAAABBBBCCCC", "DDDDEEEEFFFF", "GGGGHHHHIIII", "JJJJKKKKLLLL", 8, 25000, 100000, 128, 1024, 64, 0 }, raw_key };
-   // StatusEntry e2 = { "CCCC", "DDDD", {"AAAA", "BBBB", "CCCC", "DDDD", 8, 25000, 100000, 128, 1024, 64, 0 }, raw_key};
-
+   // StatusEntry e1 = { "GGGGHHHHIIII", "JJJJKKKKLLL", {"AAAABBBBCCCC", "DDDDEEEEFFFF", "GGGGHHHHIIII", "JJJJKKKKLLLL", 8, 25000, 100000, 128, 1024, 64, 0 }, raw_key };
     NewStatusStorage::GetInstance().PutStatusEntry(e);
-    //NewStatusStorage::GetInstance().PutStatusEntry(e1);
-   // NewStatusStorage::GetInstance().PutStatusEntry(e2);
 
     // HTTPS server port
     int port = 8443;
@@ -1215,12 +924,15 @@ int main(int argc, char** argv)
     context->use_tmp_dh_file("../CppServer/tools/certificates/dh4096.pem");
     context->set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
     context->load_verify_file("../CppServer/tools/certificates/ca.pem");
+  
     //context->set_verify_callback(asio::ssl::rfc2818_verification("*.example.com"));
 
     // Create a new HTTPS server
     //auto server = std::make_shared<HTTPSCacheServer>(service, context, port);
     auto server = std::make_shared<HTTPSQKDServer>(service, context, port);
     server->AddStaticContent(www, "/api/v1/keys");
+   // SSL_CTX_set_session_cache_mode(context->native_handle(), SSL_SESS_CACHE_OFF);
+    SSL_CTX_set_options(context->native_handle(), SSL_OP_NO_TICKET);
 
     // Start the server
     std::cout << "Server starting...";

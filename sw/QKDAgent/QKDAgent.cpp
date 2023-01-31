@@ -10,8 +10,49 @@
 
 #include "server/http/https_client.h"
 #include "string/string_utils.h"
+#include "../QKDServer/json.hpp"
+
+
+using json = nlohmann::json;
+
+#define AS_JSON(Type, ...)                                                     \
+  friend void to_json(nlohmann::ordered_json &nlohmann_json_j,                 \
+                      const Type &nlohmann_json_t) {                           \
+    NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))   \
+  }                                                                            \
+  friend void from_json(const nlohmann::ordered_json &nlohmann_json_j,         \
+                        Type &nlohmann_json_t) {                               \
+    NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) \
+  }
 
 #include <iostream>
+
+
+class KeyRequest
+{
+private:
+    int number;
+    int size;
+public:
+    KeyRequest()
+    {
+
+    }
+    KeyRequest(int number, int size)
+    {
+        this->number = number;
+        this->size = size;
+    }
+    int& getNumber()
+    {
+        return number;
+    }
+    int& getSize()
+    {
+        return size;
+    }
+    AS_JSON(KeyRequest, number,size);
+};
 
 int main(int argc, char** argv)
 {
@@ -42,6 +83,8 @@ int main(int argc, char** argv)
     context->set_default_verify_paths();
     context->set_root_certs();
     context->set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
+    context->use_certificate_chain_file("../CppServer/tools/certificates/client1.pem");
+    context->use_private_key_file("../CppServer/tools/certificates/client1.pem", asio::ssl::context::pem);
     context->load_verify_file("../CppServer/tools/certificates/ca.pem");
 
     // Create a new HTTP client
@@ -82,7 +125,14 @@ int main(int argc, char** argv)
             else if (CppCommon::StringUtils::ToUpper(commands[0]) == "GET")
             {
                 auto response = client->SendGetRequest(commands[1]).get();
-                std::cout << response << std::endl;
+                if (json::accept(response.body()))
+                {
+                    std::cout << std::setw(2) << nlohmann::ordered_json::parse(response.body()) << std::endl;
+                }
+                else 
+                {
+                    std::cout << response.body() << std::endl;
+                }
             }
             else if (CppCommon::StringUtils::ToUpper(commands[0]) == "POST")
             {
@@ -91,8 +141,36 @@ int main(int argc, char** argv)
                     std::cout << "HTTP method, URL and body must be entered!" << std::endl;
                     continue;
                 }
-                auto response = client->SendPostRequest(commands[1], commands[2]).get();
-                std::cout << response << std::endl;
+                else if (commands[1].ends_with("enc_keys")) 
+                {
+                    int number, size;
+                    json j;
+                    if (commands.size() == 3) {
+                        number = std::stoi(commands[2]);
+                        j["number"] = number;
+                    }
+                    else if (commands.size() == 4) {
+                        number = std::stoi(commands[2]);
+                        j["number"] = number;
+                        size = std::stoi(commands[3]);
+                        j["size"] = size;
+                    }
+                    else if (commands.size() > 4) {
+
+                    }
+                    auto response = client->SendPostRequest(commands[1], to_string(j)).get();
+                    if (json::accept(response.body()))
+                    {
+                        std::cout << std::setw(2) << nlohmann::ordered_json::parse(response.body()) << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << response.body() << std::endl;
+                    }
+                }
+
+               // auto response = client->SendPostRequest(commands[1], j).get();
+               
             }
             else if (CppCommon::StringUtils::ToUpper(commands[0]) == "PUT")
             {
