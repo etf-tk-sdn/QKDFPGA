@@ -1,58 +1,10 @@
-/*!
-    \file https_client.cpp
-    \brief HTTPS client example
-    \author Ivan Shynkarenka
-    \date 12.02.2019
-    \copyright MIT License
-*/
-
 #include "asio_service.h"
 
 #include "server/http/https_client.h"
 #include "string/string_utils.h"
 #include "../QKDServer/json.hpp"
-
-
-using json = nlohmann::json;
-
-#define AS_JSON(Type, ...)                                                     \
-  friend void to_json(nlohmann::ordered_json &nlohmann_json_j,                 \
-                      const Type &nlohmann_json_t) {                           \
-    NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))   \
-  }                                                                            \
-  friend void from_json(const nlohmann::ordered_json &nlohmann_json_j,         \
-                        Type &nlohmann_json_t) {                               \
-    NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) \
-  }
-
+#include "../QKDServer/Types.h"
 #include <iostream>
-
-
-class KeyRequest
-{
-private:
-    int number;
-    int size;
-public:
-    KeyRequest()
-    {
-
-    }
-    KeyRequest(int number, int size)
-    {
-        this->number = number;
-        this->size = size;
-    }
-    int& getNumber()
-    {
-        return number;
-    }
-    int& getSize()
-    {
-        return size;
-    }
-    AS_JSON(KeyRequest, number,size);
-};
 
 int main(int argc, char** argv)
 {
