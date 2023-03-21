@@ -12,7 +12,7 @@ int main(int argc, char** argv)
     //raw_key.push(3); raw_key.push(106); raw_key.push(139);
     std::queue<uint8_t> raw_key;
     srand((unsigned int)time(NULL)); //definisanje seed-a za random broj
-    for (int i = 0; i < 1000000; i++)
+    for (int i = 0; i < 100000000; i++)
     {
         raw_key.push(rand() % 255);  //brojevi moraju biti u opsegu 0-255
     }
@@ -106,11 +106,17 @@ int main(int argc, char** argv)
     // Create and prepare a new SSL server context
     auto context = std::make_shared<CppServer::Asio::SSLContext>(asio::ssl::context::tlsv12);
     context->set_password_callback([](size_t max_length, asio::ssl::context::password_purpose purpose) -> std::string { return "qwerty"; });
-    context->use_certificate_chain_file("../CppServer/tools/certificates/server.pem");
-    context->use_private_key_file("../CppServer/tools/certificates/server.pem", asio::ssl::context::pem);
-    context->use_tmp_dh_file("../CppServer/tools/certificates/dh4096.pem");
+    context->use_certificate_chain_file("../certificates/server.pem");
+    context->use_private_key_file("../certificates/server.pem", asio::ssl::context::pem);
+    context->use_tmp_dh_file("../certificates/dh4096.pem");
     context->set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
-    context->load_verify_file("../CppServer/tools/certificates/ca.pem");
+    context->load_verify_file("../certificates/ca.pem"); 
+    // 
+    //context->use_certificate_chain_file("../CppServer/tools/certificates/server.pem");
+    //context->use_private_key_file("../CppServer/tools/certificates/server.pem", asio::ssl::context::pem);
+    //context->use_tmp_dh_file("../CppServer/tools/certificates/dh4096.pem");
+    //context->set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
+    //context->load_verify_file("../CppServer/tools/certificates/ca.pem");
   
     //context->set_verify_callback(asio::ssl::rfc2818_verification("*.example.com"));
 
@@ -118,7 +124,8 @@ int main(int argc, char** argv)
     auto server = std::make_shared<QKD::HTTPSServer>(service, context, port);
     server->AddStaticContent(www, "/api/v1/keys");
    // SSL_CTX_set_session_cache_mode(context->native_handle(), SSL_SESS_CACHE_OFF);
-    SSL_CTX_set_options(context->native_handle(), SSL_OP_NO_TICKET);
+    //SSL_CTX_set_session_cache_mode(context->native_handle(), SSL_SESS_CACHE_SERVER);
+     SSL_CTX_set_options(context->native_handle(), SSL_OP_NO_TICKET);
 
     // Start the server
     std::cout << "Server starting...";

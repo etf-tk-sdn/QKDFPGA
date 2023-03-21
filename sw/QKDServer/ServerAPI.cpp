@@ -66,8 +66,6 @@ int QKD::ServerAPI::GetKeys(std::string callerSAEId, GetKeysRequest getKeyReques
         }
         else
         {
-            //std::queue<uint8_t> key;
-            std::vector<uint8_t> key;
             if (getKeyRequest.size == 0) getKeyRequest.size = (e1->status).key_size;
             if (getKeyRequest.size % 8 != 0)
             {
@@ -83,11 +81,11 @@ int QKD::ServerAPI::GetKeys(std::string callerSAEId, GetKeysRequest getKeyReques
  
                 for (int z = 0; z < getKeyRequest.number; z++)  //Proces kreiranja kljuca, kodiranja i generisanja njegovog ID-a ponavlja se onoliko puta koliko je zahtjevano kljuceva
                 {
-                    std::cout << "RAW KEY ";
+                    uint8_t* key = new uint8_t[getKeyRequest.size / 8];
                     for (int i = 0; i < getKeyRequest.size / 8; i++)  //Kreiranje pojedinacnih kljuceva zadane velicine
                     {
-                        //key.push(e1->rawKeys.front());
-                        key.push_back(e1->rawKeys.front());
+                        //key.push_back(e1->rawKeys.front());
+                        key[i] = e1->rawKeys.front();
                         e1->rawKeys.pop(); //Brisanje preuzetih kljuceva iz baze, a automatski se azurira i status!!!
                     }
 
@@ -102,7 +100,8 @@ int QKD::ServerAPI::GetKeys(std::string callerSAEId, GetKeysRequest getKeyReques
                     }
 
                     //Base64 encoding kljuca
-                    std::string encodedData = base64_encode(&key.front(), int(key.size()));
+                    std::string encodedData = base64_encode(key, getKeyRequest.size / 8);
+                    delete[] key;
 
                     //keyContainer1 je novi key+key ID koji ce se ispisati
                     keyContainer1->keys.push_back(Key(key_ID, encodedData));
@@ -115,9 +114,9 @@ int QKD::ServerAPI::GetKeys(std::string callerSAEId, GetKeysRequest getKeyReques
                         ServerAPI::GetInstance().GetKeysDB()->PutKeyContainerValue(std::make_pair((getKeyRequest.additional_slave_IDs)[j], key_ID), std::make_pair(callerSAEId, encodedData));
                         }
                     }
-                    while (!key.empty()) { //Praznjenje kljuca kako nove vrijednosti ne bi uticale na novi kljuc
+                   /* while (!key.empty()) { //Praznjenje kljuca kako nove vrijednosti ne bi uticale na novi kljuc
                         key.pop_back();
-                    }
+                    }*/
                 }
 
                 *keyContainer = &(*keyContainer1);
