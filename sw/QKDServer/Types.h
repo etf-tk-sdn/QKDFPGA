@@ -23,13 +23,13 @@ namespace QKD
         std::string target_KME_ID;
         std::string master_SAE_ID;
         std::string slave_SAE_ID;
-        int key_size = 0;
-        int stored_key_count = 0;
-        int max_key_count = 0;
-        int max_key_per_request = 0;
-        int max_key_size = 0;
-        int min_key_size = 0;
-        int max_SAE_ID_count = 0;
+        unsigned long int key_size = 0;
+        unsigned long int stored_key_count = 0;
+        unsigned long int max_key_count = 0;
+        unsigned long int max_key_per_request = 0;
+        unsigned long int max_key_size = 0;
+        unsigned long int min_key_size = 0;
+        unsigned long int max_SAE_ID_count = 0;
         AS_JSON(Status, source_KME_ID, target_KME_ID, master_SAE_ID, slave_SAE_ID, key_size, stored_key_count, max_key_count, max_key_per_request, max_key_size, min_key_size, max_SAE_ID_count);
     };
 
@@ -50,8 +50,8 @@ namespace QKD
     struct GetKeysRequest
     {
         std::string slave_SAE_ID;
-        int number;
-        int size;
+        unsigned long int number;
+        unsigned long int size;
         json additional_slave_IDs;
     };
 

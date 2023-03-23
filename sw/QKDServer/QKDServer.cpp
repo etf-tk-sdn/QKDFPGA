@@ -8,11 +8,11 @@
 
 int main(int argc, char** argv)
 {
-
     //raw_key.push(3); raw_key.push(106); raw_key.push(139);
     std::queue<uint8_t> raw_key;
+    
     srand((unsigned int)time(NULL)); //definisanje seed-a za random broj
-    for (int i = 0; i < 1000000000; i++)
+    for (unsigned long int i = 0; i < 1000000000; i++)
     {
         raw_key.push(rand() % 255);  //brojevi moraju biti u opsegu 0-255
     }

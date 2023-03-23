@@ -71,18 +71,22 @@ int QKD::ServerAPI::GetKeys(std::string callerSAEId, GetKeysRequest getKeyReques
             {
                 return RESPONSE_SIZE_SHALL_BE_MULTIPLE_OF_8;
             }
-            else if (getKeyRequest.size * getKeyRequest.number > int((e1->rawKeys).size()) * 8) //Provjera da li ima dovoljno materijala za trazene kljuceve
+            else if (getKeyRequest.size * getKeyRequest.number > (unsigned long int)((e1->rawKeys).size()) * 8ul) //Provjera da li ima dovoljno materijala za trazene kljuceve
             {
+                std::cout << "getKeyRequest.size = " << getKeyRequest.size << std::endl;
+                std::cout << "getKeyRequest.number = " << getKeyRequest.number << std::endl;
+                std::cout << "(e1->rawKeys).size() = " << (unsigned long int)(e1->rawKeys).size() << std::endl;
+                std::cout << "------------------" << std::endl;
                 return RESPONSE_NOT_ENOUGH_MATERIAL;
             }
             else
             {
                 KeyContainer* keyContainer1 = new KeyContainer;
  
-                for (int z = 0; z < getKeyRequest.number; z++)  //Proces kreiranja kljuca, kodiranja i generisanja njegovog ID-a ponavlja se onoliko puta koliko je zahtjevano kljuceva
+                for (unsigned long int z = 0; z < getKeyRequest.number; z++)  //Proces kreiranja kljuca, kodiranja i generisanja njegovog ID-a ponavlja se onoliko puta koliko je zahtjevano kljuceva
                 {
                     uint8_t* key = new uint8_t[getKeyRequest.size / 8];
-                    for (int i = 0; i < getKeyRequest.size / 8; i++)  //Kreiranje pojedinacnih kljuceva zadane velicine
+                    for (unsigned long int i = 0; i < getKeyRequest.size / 8; i++)  //Kreiranje pojedinacnih kljuceva zadane velicine
                     {
                         //key.push_back(e1->rawKeys.front());
                         key[i] = e1->rawKeys.front();

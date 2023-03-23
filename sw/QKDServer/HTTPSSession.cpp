@@ -90,7 +90,7 @@ void QKD::HTTPSSession::onReceivedRequest(const CppServer::HTTP::HTTPRequest& re
 	{
 		std::string url(request.url());
 		std::string SAE_ID;
-		int number = 1, size = 0;
+		unsigned long int number = 1, size = 0;
 
 		if (url.ends_with("/status"))
 		{
@@ -204,7 +204,7 @@ void QKD::HTTPSSession::onReceivedRequest(const CppServer::HTTP::HTTPRequest& re
 
 			std::string SAE_ID = url1[0];
 			Status status;
-			int number = 0, size = 0, default_size = 0;
+			unsigned long int number = 0, size = 0, default_size = 0;
 			json slave_IDs, data;
 
 			if (request.body_length() != 0)   //Ako POST request ima tijelo, onda pokupi iz njeg number, size i slave_IDs
