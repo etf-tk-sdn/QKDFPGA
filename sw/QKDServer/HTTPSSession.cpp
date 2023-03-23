@@ -40,7 +40,7 @@ std::string QKD::HTTPSSession::getCallerPublicKey() {
 	ERR_load_crypto_strings();
 	this->stream().handshake(asio::ssl::stream<asio::ip::tcp::socket>::client);
 	X509* cert = SSL_get_peer_certificate(this->stream().native_handle());
-	BIO* bp = BIO_new_fp(stdout, BIO_NOCLOSE);
+	//BIO* bp = BIO_new_fp(stdout, BIO_NOCLOSE);
 
 	if (cert) {
 		if (SSL_get_verify_result(this->stream().native_handle()) == X509_V_OK) {
@@ -48,19 +48,18 @@ std::string QKD::HTTPSSession::getCallerPublicKey() {
 			if (pubkey) {
 				switch (EVP_PKEY_id(pubkey)) {
 				case EVP_PKEY_RSA:
-					BIO_printf(bp, "%d bit RSA Key\n\n", EVP_PKEY_bits(pubkey));
+					//BIO_printf(bp, "%d bit RSA Key\n\n", EVP_PKEY_bits(pubkey));
 					break;
 				case EVP_PKEY_DSA:
-					BIO_printf(bp, "%d bit DSA Key\n\n", EVP_PKEY_bits(pubkey));
+					//BIO_printf(bp, "%d bit DSA Key\n\n", EVP_PKEY_bits(pubkey));
 					break;
 				default:
-					BIO_printf(bp, "%d bit non-RSA/DSA Key\n\n", EVP_PKEY_bits(pubkey));
+					//BIO_printf(bp, "%d bit non-RSA/DSA Key\n\n", EVP_PKEY_bits(pubkey));
 					break;
 				}
 			}
 
 			callerPublicKey = EVP_PKEY_to_PEM(pubkey);
-			std::cout << "Public key: " << callerPublicKey;
 			EVP_PKEY_free(pubkey);
 		}
 	}
@@ -82,7 +81,7 @@ void QKD::HTTPSSession::onReceivedRequest(const CppServer::HTTP::HTTPRequest& re
 	}
 
 	// Show HTTP request content
-	std::cout << std::endl << request;
+	//std::cout << std::endl << request;
 
 	// Process HTTP request methods
 	if (request.method() == "HEAD")

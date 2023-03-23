@@ -114,7 +114,7 @@
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN32_WINNT=0x0A00;_WIN32_SDK=19041;CRYPT_SUPPORT;WINSOCK_SUPPORT;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>..\CppServer\modules\CppCommon\include;..\CppServer\modules\CppCommon\modules\vld;..\CppServer\modules\CppCommon\modules\fmt\include;..\CppServer\include;..\CppServer\modules\asio\asio\include;..\CppServer\modules\OpenSSL\VS\include;..\CppServer\proto;C:\qkdfpga\sw\boost_1_81_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\CppServer\modules\CppCommon\include;..\CppServer\modules\CppCommon\modules\vld;..\CppServer\modules\CppCommon\modules\fmt\include;..\CppServer\include;..\CppServer\modules\asio\asio\include;..\CppServer\modules\OpenSSL\VS\include;..\CppServer\proto;..\boost_1_81_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <TreatWarningAsError>true</TreatWarningAsError>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
@@ -125,7 +125,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\qkdfpga\sw\boost_1_81_0\lib64-msvc-14.3</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\boost_1_81_0\lib64-msvc-14.3</AdditionalLibraryDirectories>
       <AdditionalDependencies>..\CppServer\modules\OpenSSL\VS\lib\libssl.lib;..\CppServer\modules\OpenSSL\VS\lib\libcrypto.lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\Crypt32.Lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\MsWSock.Lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\WS2_32.Lib;..\CppServer\temp\modules\CppCommon\RelWithDebInfo\cppcommon.lib;..\CppServer\bin\cppserver.lib;..\CppServer\bin\proto.lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\DbgHelp.Lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\RpcRT4.Lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\UserEnv.Lib;..\CppServer\temp\modules\CppCommon\modules\RelWithDebInfo\fmt.lib;..\CppServer\temp\modules\RelWithDebInfo\asio.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImportLibrary>../CppServer/bin/cppserver-example-https_server.lib</ImportLibrary>
@@ -145,12 +145,13 @@
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN32_WINNT=0x0A00;_WIN32_SDK=19041;CRYPT_SUPPORT;WINSOCK_SUPPORT;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>..\CppServer\modules\CppCommon\include;..\CppServer\modules\CppCommon\modules\vld;..\CppServer\modules\CppCommon\modules\fmt\include;..\CppServer\include;..\CppServer\modules\asio\asio\include;..\CppServer\modules\OpenSSL\VS\include;..\CppServer\proto;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\CppServer\modules\CppCommon\include;..\CppServer\modules\CppCommon\modules\vld;..\CppServer\modules\CppCommon\modules\fmt\include;..\CppServer\include;..\CppServer\modules\asio\asio\include;..\CppServer\modules\OpenSSL\VS\include;..\CppServer\proto;..\boost_1_81_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableSpecificWarnings>4100;4250</DisableSpecificWarnings>
       <UseFullPaths>false</UseFullPaths>
+      <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -159,7 +160,7 @@
       <OptimizeReferences>
       </OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\boost_1_81_0\lib64-msvc-14.3;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>..\CppServer\modules\OpenSSL\VS\lib\libssl.lib;..\CppServer\modules\OpenSSL\VS\lib\libcrypto.lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\Crypt32.Lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\MsWSock.Lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\WS2_32.Lib;..\CppServer\temp\modules\CppCommon\RelWithDebInfo\cppcommon.lib;..\CppServer\bin\cppserver.lib;..\CppServer\bin\proto.lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\DbgHelp.Lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\RpcRT4.Lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\UserEnv.Lib;..\CppServer\temp\modules\CppCommon\modules\RelWithDebInfo\fmt.lib;..\CppServer\temp\modules\RelWithDebInfo\asio.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImportLibrary>..\CppServer\bin\cppserver-example-https_server.lib</ImportLibrary>
