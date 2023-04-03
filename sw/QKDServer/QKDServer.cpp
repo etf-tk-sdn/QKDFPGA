@@ -1,3 +1,5 @@
+#define LOADTESTING
+
 #include "asio_service.h"
 #include "ServerAPI.h"
 #include "HTTPSServer.h"
@@ -12,7 +14,7 @@ int main(int argc, char** argv)
     std::queue<uint8_t> raw_key;
     
     srand((unsigned int)time(NULL)); //definisanje seed-a za random broj
-    for (unsigned long int i = 0; i < 1000000000; i++)
+    for (unsigned long int i = 0; i < 65000000; i++)
     {
         raw_key.push(rand() % 255);  //brojevi moraju biti u opsegu 0-255
     }

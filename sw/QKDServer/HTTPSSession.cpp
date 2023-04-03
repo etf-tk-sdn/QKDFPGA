@@ -98,19 +98,22 @@ void QKD::HTTPSSession::onReceivedRequest(const CppServer::HTTP::HTTPRequest& re
 			CppCommon::StringUtils::ReplaceFirst(SAE_ID, "/api/v1/keys/", "");
 			CppCommon::StringUtils::ReplaceFirst(SAE_ID, "/status", "");
 
-			Status* Status;
-			int Status_Response = ServerAPI::GetInstance().GetStatus(SAE_ID, callerSAEId, &Status);
+			Status* status;
+			int Status_Response = ServerAPI::GetInstance().GetStatus(SAE_ID, callerSAEId, &status);
 
 			switch (Status_Response) {
 			case ServerAPI::RESPONSE_NOT_FOUND:
 				SendResponseAsync(response().MakeErrorResponse(404, "Required Status value was not found for the SAE ID: " + SAE_ID));
+				delete status;
 				break;
 			case ServerAPI::RESPONSE_UNAUTHORIZED:
 				SendResponseAsync(response().MakeErrorResponse(401, "Unauthorized"));
+				delete status;
 				break;
 			case ServerAPI::RESPONSE_OK:
-				nlohmann::ordered_json jsonStatus = *Status;
+				nlohmann::ordered_json jsonStatus = *status;
 				SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
+				delete status;
 			}
 		}
 		else if (url.find("/enc_keys") != std::string::npos)
@@ -147,24 +150,29 @@ void QKD::HTTPSSession::onReceivedRequest(const CppServer::HTTP::HTTPRequest& re
 
 			GetKeysRequest getKeyRequest = { SAE_ID,number,size };
 
-			KeyContainer* KeyContainer;
-			int GetKeys_Response = ServerAPI::GetInstance().GetKeys(callerSAEId, getKeyRequest, &KeyContainer);
+			KeyContainer* keyContainer;
+			int GetKeys_Response = ServerAPI::GetInstance().GetKeys(callerSAEId, getKeyRequest, &keyContainer);
 			switch (GetKeys_Response) {
 			case ServerAPI::RESPONSE_NOT_FOUND:
 				SendResponseAsync(response().MakeErrorResponse(404, "Required Key value was not found for the SAE ID: " + SAE_ID));
+				delete keyContainer;
 				break;
 			case ServerAPI::RESPONSE_UNAUTHORIZED:
 				SendResponseAsync(response().MakeErrorResponse(401, "Unauthorized"));
+				delete keyContainer;
 				break;
 			case ServerAPI::RESPONSE_SIZE_SHALL_BE_MULTIPLE_OF_8:
 				SendResponseAsync(response().MakeErrorResponse(400, "Size shall be a multiple of 8."));
+				delete keyContainer;
 				break;
 			case ServerAPI::RESPONSE_NOT_ENOUGH_MATERIAL:
 				SendResponseAsync(response().MakeErrorResponse(400, "There is not enough key material for requested parameters."));
+				delete keyContainer;
 				break;
 			case ServerAPI::RESPONSE_OK:
-				nlohmann::ordered_json jsonStatus = *KeyContainer;
+				nlohmann::ordered_json jsonStatus = *keyContainer;
 				SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
+				delete keyContainer;
 			}
 		}
 		else if (url.find("/dec_keys") != std::string::npos)
@@ -177,19 +185,22 @@ void QKD::HTTPSSession::onReceivedRequest(const CppServer::HTTP::HTTPRequest& re
 			json key_ID_url = { url1[1] }; //definisano kao json i niz da bi se moglo indeksirati, i raditi i sa POST metodom kada moze biti definisano vise ID-eva
 
 			GetKeysWithIDRequest getKeyWithIDRequest = { SAE_ID, key_ID_url };
-			KeyContainer* KeyContainer;
-			int GetKeysWithID_Response = ServerAPI::GetInstance().GetKeysWithId(callerSAEId, getKeyWithIDRequest, &KeyContainer);
+			KeyContainer* keyContainer;
+			int GetKeysWithID_Response = ServerAPI::GetInstance().GetKeysWithId(callerSAEId, getKeyWithIDRequest, &keyContainer);
 
 			switch (GetKeysWithID_Response) {
 			case ServerAPI::RESPONSE_NOT_FOUND:
 				SendResponseAsync(response().MakeErrorResponse(404, "Required Key value was not found for the SAE ID: " + SAE_ID));
+				delete keyContainer;
 				break;
 			case ServerAPI::RESPONSE_UNAUTHORIZED:
 				SendResponseAsync(response().MakeErrorResponse(401, "Unauthorized"));
+				delete keyContainer;
 				break;
 			case ServerAPI::RESPONSE_OK:
-				nlohmann::ordered_json jsonStatus = *KeyContainer;
+				nlohmann::ordered_json jsonStatus = *keyContainer;
 				SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
+				delete keyContainer;
 			}
 		}
 	}
@@ -216,24 +227,28 @@ void QKD::HTTPSSession::onReceivedRequest(const CppServer::HTTP::HTTPRequest& re
 			}
 
 			GetKeysRequest getKeyRequest = { SAE_ID,number,size,slave_IDs };
-			KeyContainer* KeyContainer;
-			int GetKeys_Response = ServerAPI::GetInstance().GetKeys(callerSAEId, getKeyRequest, &KeyContainer);
+			KeyContainer* keyContainer;
+			int GetKeys_Response = ServerAPI::GetInstance().GetKeys(callerSAEId, getKeyRequest, &keyContainer);
 
 			switch (GetKeys_Response) {
 			case ServerAPI::RESPONSE_NOT_FOUND:
 				SendResponseAsync(response().MakeErrorResponse(404, "Required Key value was not found for the SAE ID: " + SAE_ID));
+				delete keyContainer;
 				break;
 			case ServerAPI::RESPONSE_UNAUTHORIZED:
 				SendResponseAsync(response().MakeErrorResponse(401, "Unauthorized"));
+				delete keyContainer;
 				break;
 			case ServerAPI::RESPONSE_SIZE_SHALL_BE_MULTIPLE_OF_8:
 				SendResponseAsync(response().MakeErrorResponse(400, "Size shall be a multiple of 8."));
+				delete keyContainer;
 				break;
 			case ServerAPI::RESPONSE_NOT_ENOUGH_MATERIAL:
 				SendResponseAsync(response().MakeErrorResponse(400, "There is not enough key material for requested parameters."));
+				delete keyContainer;
 				break;
 			case ServerAPI::RESPONSE_OK:
-				nlohmann::ordered_json jsonStatus = *KeyContainer;
+				nlohmann::ordered_json jsonStatus = *keyContainer;
 				SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
 			}
 		}
@@ -243,24 +258,27 @@ void QKD::HTTPSSession::onReceivedRequest(const CppServer::HTTP::HTTPRequest& re
 			CppCommon::StringUtils::ReplaceFirst(url, "/api/v1/keys/", "");
 			std::vector<std::string> url1 = CppCommon::StringUtils::Split(url, "/dec_keys");
 			std::string SAE_ID = url1[0];
-			KeyContainer keyContainer;
+			//KeyContainer keyContainer;
 			json data = json::parse(request.body());
 			json key_IDs = data["key_IDs"];
 
 			GetKeysWithIDRequest getKeyWithIDRequest = { SAE_ID, {key_IDs} };
-			KeyContainer* KeyContainer;
-			int GetKeysWithID_Response = ServerAPI::GetInstance().GetKeysWithId(callerSAEId, getKeyWithIDRequest, &KeyContainer);
+			KeyContainer* keyContainer;
+			int GetKeysWithID_Response = ServerAPI::GetInstance().GetKeysWithId(callerSAEId, getKeyWithIDRequest, &keyContainer);
 
 			switch (GetKeysWithID_Response) {
 			case ServerAPI::RESPONSE_NOT_FOUND:
 				SendResponseAsync(response().MakeErrorResponse(404, "Required Key value was not found for the SAE ID: " + SAE_ID));
+				delete keyContainer;
 				break;
 			case ServerAPI::RESPONSE_UNAUTHORIZED:
 				SendResponseAsync(response().MakeErrorResponse(401, "Unauthorized"));
+				delete keyContainer;
 				break;
 			case ServerAPI::RESPONSE_OK:
-				nlohmann::ordered_json jsonStatus = *KeyContainer;
+				nlohmann::ordered_json jsonStatus = *keyContainer;
 				SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
+				delete keyContainer;
 			}
 		}
 	}

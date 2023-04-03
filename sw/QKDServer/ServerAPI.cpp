@@ -1,3 +1,5 @@
+#define LOADTESTING
+
 #include "ServerAPI.h"
 #include "base64.h"
 #include "combaseapi.h"
@@ -91,6 +93,9 @@ int QKD::ServerAPI::GetKeys(std::string callerSAEId, GetKeysRequest getKeyReques
                         //key.push_back(e1->rawKeys.front());
                         key[i] = e1->rawKeys.front();
                         e1->rawKeys.pop(); //Brisanje preuzetih kljuceva iz baze, a automatski se azurira i status!!!
+#ifdef LOADTESTING          
+                        e1->rawKeys.push(key[i]);
+#endif
                     }
 
                     //Generisanje Key ID-a za prethodno kreirani kljuc
@@ -109,6 +114,7 @@ int QKD::ServerAPI::GetKeys(std::string callerSAEId, GetKeysRequest getKeyReques
 
                     //keyContainer1 je novi key+key ID koji ce se ispisati
                     keyContainer1->keys.push_back(Key(key_ID, encodedData));
+#ifndef LOADTESTING
                     ServerAPI::GetInstance().GetKeysDB()->PutKeyContainerValue(std::make_pair(getKeyRequest.slave_SAE_ID, key_ID), std::make_pair((e1->status).master_SAE_ID, encodedData));
                     
                     if ((getKeyRequest.additional_slave_IDs).size() != 0) //Ukoliko su definisani i dodatni ID-evi, upisuje kreirane kljuceve i za njih
@@ -118,7 +124,8 @@ int QKD::ServerAPI::GetKeys(std::string callerSAEId, GetKeysRequest getKeyReques
                         ServerAPI::GetInstance().GetKeysDB()->PutKeyContainerValue(std::make_pair((getKeyRequest.additional_slave_IDs)[j], key_ID), std::make_pair(callerSAEId, encodedData));
                         }
                     }
-                   /* while (!key.empty()) { //Praznjenje kljuca kako nove vrijednosti ne bi uticale na novi kljuc
+#endif
+                    /* while (!key.empty()) { //Praznjenje kljuca kako nove vrijednosti ne bi uticale na novi kljuc
                         key.pop_back();
                     }*/
                 }

@@ -35,7 +35,6 @@ namespace QKD
 
     struct Key 
     {
-   
         std::string key_ID;
         std::string key;
         AS_JSON(Key, key_ID, key);
