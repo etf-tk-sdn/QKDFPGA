@@ -1,6 +1,7 @@
 #include "HTTPSSession.h"
 #include "ServerAPI.h"
 #include "string/string_utils.h"
+#include <algorithm>
 
 std::string QKD::HTTPSSession::EVP_PKEY_to_PEM(EVP_PKEY* key) {
 
@@ -69,6 +70,24 @@ std::string QKD::HTTPSSession::getCallerPublicKey() {
 
 void QKD::HTTPSSession::onReceivedRequest(const CppServer::HTTP::HTTPRequest& request)
 {
+	asio::socket_base::send_buffer_size sbs(8192000);
+	asio::socket_base::receive_buffer_size rbs(8192000);
+	this->stream().lowest_layer().set_option(sbs);
+	this->stream().lowest_layer().set_option(rbs);
+
+	/*if (this->option_send_buffer_limit() != 0)
+		std::cout << "option_send_buffer_limit = " << this->option_send_buffer_limit() << std::endl;*/
+	/*if (this->option_send_buffer_size() != 0)
+		std::cout << "option_send_buffer_size = " << this->option_send_buffer_size() << std::endl;*/
+	/*if (this->server()->option_no_delay() != 0)
+		std::cout << "option_no_delay = " << this->server()->option_no_delay() << std::endl;
+	std::cout << "----------------------------------------------------" << std::endl;*/
+
+	/*if (!this->server()->option_no_delay())
+		this->server()->SetupNoDelay(true);*/
+	/*asio::socket_base::send_buffer_size option(1000000);
+	this->socket().set_option(option);*/
+
 	if (callerSAEId == "")
 	{
 		callerSAEId = ServerAPI::GetInstance().GetSAEID(getCallerPublicKey());
@@ -171,7 +190,17 @@ void QKD::HTTPSSession::onReceivedRequest(const CppServer::HTTP::HTTPRequest& re
 				break;
 			case ServerAPI::RESPONSE_OK:
 				nlohmann::ordered_json jsonStatus = *keyContainer;
-				SendResponseAsync(response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8"));
+				CppServer::HTTP::HTTPResponse resp = response().MakeGetResponse(jsonStatus.dump(), "application/json; charset=UTF-8");
+				SendResponseAsync(resp);
+				/*std::cout << "=============" << std::endl;
+				std::cout << "SIZE = " << resp.cache().size() << std::endl;
+				std::cout << "-------------" << std::endl;
+				std::cout << resp.cache() << std::endl;
+				std::cout << "-------------" << std::endl;
+				std::string rawdata = resp.cache();
+				std::replace(rawdata.begin(), rawdata.end(), '\r', 'R');
+				std::replace(rawdata.begin(), rawdata.end(), '\n', 'N');
+				std::cout << rawdata << std::endl;*/
 				delete keyContainer;
 			}
 		}
