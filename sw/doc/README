@@ -9,3 +9,5 @@ gil update  %Run as administrator
 cd build
 vs
 
+
+git config lfs.https://github.com/etf-tk-sdn/QKDFPGA.git.access basic
